@@ -1,0 +1,7 @@
+
+Problem Set 1: Search
+
+Problem: Minimax
+1: Tree 1 :: time-limit = 1sec
+util is  6.875
+util is  10.875
