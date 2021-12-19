@@ -1,4 +1,5 @@
 from argparse import ArgumentDefaultsHelpFormatter
+from os import stat
 from threading import active_count
 from typing import Tuple
 from game import HeuristicFunction, Game, S, A
@@ -35,52 +36,36 @@ def greedy(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: 
 # 'C:\Python39\python.exe' .\autograder.py -q 1
 def minimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1) -> Tuple[float, A]:
     # TODO: ADD YOUR CODE HERE
-    # game.get_turn()
-    # side note to me : look at the greedy to understand how it all works
-    def max_val(myState: S, level):
-        # print("max_val now state is ", myState)
-        agent = game.get_turn(myState)
-        if max_depth != -1 and level == max_depth:
-            # print(level , " level == max_depth heuristic is ",heuristic(game,myState, 1) )
-            return heuristic(game,myState, agent)
-        terminal, values = game.is_terminal(myState)
-        if terminal:
-            return values[agent]
+
+    agent = game.get_turn(state)
+    terminal, values = game.is_terminal(state)
+    if terminal:
+        return values[agent], None
+
+    if max_depth == 0:
+        heuristic(game,state, agent)
+    if agent == 0:
+        # max
         v = -inf
-        for action in game.get_actions(myState):
-            v = max(v, min_val(game.get_successor(myState, action),level+1))
-        return 0
-
-    def min_val(myState: S, level):
-        # print(level," min_val  now  state is ", myState)
-        
-        agent = game.get_turn(myState)
-        if max_depth != -1 and level == max_depth:
-            # print(level, " level == max_depth heuristic is ",heuristic(game,myState, 0) )
-            return heuristic(game,myState,agent )
-
-        terminal, values = game.is_terminal(myState)
-        if terminal:
-            # print(level , " terminal heuristic is ",heuristic(game,myState, 1) )
-            # return myState.value
-            return values[agent]
+        maxAct = None
+        allActions = game.get_actions(state)
+        for action in allActions:
+            new_val,_ = minimax(game, game.get_successor(state, action),heuristic, max(-1,max_depth-1))
+            if new_val > v:
+                v=new_val
+                maxAct = action
+        return v, maxAct
+    else:
+        #min
         v = inf
-        for action in game.get_actions(myState):
-            # print("about to cal max_val")
-            v = min(v, max_val(game.get_successor(myState, action),level+1))
-        return v
-    actions = game.get_actions(state)
-    max_action = 0
-    max_util = -inf
-    for action in actions:
-        util = min_val(game.get_successor(state, action),1)
-        print("util is ", util)
-        if util > max_util:
-            max_util = util
-            max_action = action
-
-    # get the action that returns the maximum utilit
-    return max_util, max_action
+        minAct = None
+        allActions = game.get_actions(state)
+        for action in allActions:
+            new_val,_ = minimax(game, game.get_successor(state, action),heuristic,  max(-1,max_depth-1))
+            if new_val < v:
+                v=new_val
+                minAct = action
+        return v, minAct
 
 # Apply Alpha Beta pruning and return the tree value and the best action
 
