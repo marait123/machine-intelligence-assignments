@@ -32,25 +32,22 @@ def greedy(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: 
     return value, action
 
 # Apply Minimax search and return the tree value and the best action
-
-# 'C:\Python39\python.exe' .\autograder.py -q 1
-def minimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1) -> Tuple[float, A]:
-    # TODO: ADD YOUR CODE HERE
-
+def myminimax(initialAgent, game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1):
     agent = game.get_turn(state)
     terminal, values = game.is_terminal(state)
+    
     if terminal:
-        return values[agent], None
+        return values[initialAgent], None
 
     if max_depth == 0:
-        heuristic(game,state, agent)
+        return heuristic(game,state, initialAgent), None
     if agent == 0:
         # max
         v = -inf
         maxAct = None
         allActions = game.get_actions(state)
         for action in allActions:
-            new_val,_ = minimax(game, game.get_successor(state, action),heuristic, max(-1,max_depth-1))
+            new_val,_ = myminimax(initialAgent,game, game.get_successor(state, action),heuristic, max(-1,max_depth-1))
             if new_val > v:
                 v=new_val
                 maxAct = action
@@ -61,18 +58,33 @@ def minimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth:
         minAct = None
         allActions = game.get_actions(state)
         for action in allActions:
-            new_val,_ = minimax(game, game.get_successor(state, action),heuristic,  max(-1,max_depth-1))
+            new_val,_ = myminimax(initialAgent,game, game.get_successor(state, action),heuristic,  max(-1,max_depth-1))
             if new_val < v:
                 v=new_val
                 minAct = action
         return v, minAct
+# 'C:\Python39\python.exe' .\autograder.py -q 1
+def minimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1) -> Tuple[float, A]:
+    # TODO: ADD YOUR CODE HERE
+    agent = game.get_turn(state)
+    return myminimax(agent, game, state, heuristic, max_depth)
 
 # Apply Alpha Beta pruning and return the tree value and the best action
-
-
+def alphaMax(alpha, beta, game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1):
+    pass
+def alphaMin(alpha, beta, game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1):
+    pass
 def alphabeta(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1) -> Tuple[float, A]:
     # TODO: ADD YOUR CODE HERE
-    NotImplemented()
+    v = -inf
+    maxAct = None
+    allActions = game.get_actions(state)
+    for action in allActions:
+        new_val,_ = myminimax(initialAgent,game, game.get_successor(state, action),heuristic, max(-1,max_depth-1))
+        if new_val > v:
+            v=new_val
+            maxAct = action
+    return v, maxAct
 
 # Apply Alpha Beta pruning with move ordering and return the tree value and the best action
 
