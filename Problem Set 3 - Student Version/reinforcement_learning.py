@@ -85,8 +85,10 @@ class SARSALearningAgent(RLAgent[S, A]):
         # If next_action is None, then next_state is a terminal state in which case, we consider the Q-value of next_state to be 0
         if next_state is None:
             return
+        # just applying the sarse update rule here
+        q_s_a = self.Q[str(state)][str(action)]
         q_s_abar = self.Q[str(next_state)][str(next_action)] 
-        self.Q[str(state)][str(action)] = self.Q[str(state)][str(action)]  + self.learning_rate * (reward + self.discount_factor * q_s_abar- self.Q[str(state)][str(action)]) 
+        self.Q[str(state)][str(action)] = q_s_a  + self.learning_rate * (reward + self.discount_factor * q_s_abar- q_s_a) 
 
     # Save the Q-table to a json file
     def save(self, file_path: str):
@@ -136,7 +138,11 @@ class QLearningAgent(RLAgent[S, A]):
     def update(self, env: Environment[S, A], state: S, action: A, reward: float, next_state: S, done: bool):
         #TODO: Complete this function to update Q-table using the Q-Learning update rule
         # If done is True, then next_state is a terminal state in which case, we consider the Q-value of next_state to be 0
+        
+        # update the entry Q[state][action] in the Q table based on the equetion of Q-Learning
+        # current_state_utility
         q_s_a = self.Q[str(state)][str(action)]
+        # next state utility
         q_s_abar = self.compute_utility(env, next_state)
         self.Q[str(state)][str(action)] = q_s_a + self.learning_rate *(reward + self.discount_factor * q_s_abar - q_s_a)
     
@@ -194,7 +200,7 @@ class ApproximateQLearningAgent(RLAgent[S, A]):
     def __compute_q_from_features(self, features: Dict[str, float], action: A) -> float:
         #TODO: Complete this function
         # NOTE: Remember to cast the action to string before quering self.weights
-
+        # q value is the dot product between weights and input features
         q_val=0
         weightsDic = self.weights[str(action)]
         for feature in weightsDic:
@@ -225,6 +231,7 @@ class ApproximateQLearningAgent(RLAgent[S, A]):
         q_s_abar = 0 if done else self.__compute_utility_from_features(features_bar)
         
         # update the weights for each feature in the weights dictionary for the current action
+        # based on the weights update equation
         for weight_feature in self.weights[str(action)]:
             w_i_a = self.weights[str(action)][weight_feature]
             wi = features[weight_feature]
