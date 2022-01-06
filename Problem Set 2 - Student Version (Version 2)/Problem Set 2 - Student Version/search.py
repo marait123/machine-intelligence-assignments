@@ -85,8 +85,6 @@ def minimax(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth:
 
 
 def myalphabeta(iagent, alpha, beta, game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1):
-    # the code for alpha beta ordering is the same as minimax
-    # with the extra checks on alpha and beta
     # get the player whose turn is now
     agent = game.get_turn(state)
     terminal, values = game.is_terminal(state)
@@ -140,10 +138,8 @@ def alphabeta(game: Game[S, A], state: S, heuristic: HeuristicFunction, max_dept
 
 
 def myalphabeta_ordering(iagent, alpha, beta, game: Game[S, A], state: S, heuristic: HeuristicFunction, max_depth: int = -1):
-    # the code for alpha beta ordering is the same as alpha beta
-    # but differs in that we sort the children based on their heuristic
-    # before we loop on them
-    
+    # the code for alpha beta ordering is the same as minimax
+    # with the extra checks on alpha and beta
     # get the player whose turn is now
     agent = game.get_turn(state)
     terminal, values = game.is_terminal(state)
@@ -218,7 +214,7 @@ def myexpectimax(iagent, alpha, beta, game: Game[S, A], state: S, heuristic: Heu
     if max_depth == 0:
         return heuristic(game, state, iagent), None
     if agent == 0:
-        # normal max node calculations
+        # max node
         v = -inf
         maxAct = None
         allActions = game.get_actions(state)
