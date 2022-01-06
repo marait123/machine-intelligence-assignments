@@ -22,9 +22,11 @@ class ValueIterationAgent(Agent[S, A]):
     # if the state is terminal, return 0
     def compute_bellman(self, state: S) -> float:
         #TODO: Complete this function
-        # NotImplemented()
         if(self.mdp.is_terminal(state)):
             return 0
+
+        # bellman equestion updates the utilities based on the 
+        # the  utility function of next state, thr reward ,the discount factor 
         actions = self.mdp.get_actions(state)
         max_u=-inf
         for action in actions:
@@ -33,8 +35,8 @@ class ValueIterationAgent(Agent[S, A]):
             for new_state in new_states_dic:
                 #new_u+=P(s'| s, a) * (r(s,a,s') + discount_factor * U(s'))
 
-                reward = self.mdp.get_reward(state, action, new_state) 
-
+                reward = self.mdp.get_reward(state, action, new_state)
+                # calculate the discounted reward
                 utility_discounted = self.discount_factor * self.utilities[str(new_state)]
                 new_u += (new_states_dic[new_state] *  (reward+ utility_discounted))
 
@@ -47,9 +49,12 @@ class ValueIterationAgent(Agent[S, A]):
     def train(self, iterations: int = 1):
         #TODO: Complete this function to apply value iteration for the given number of iterations
         for _ in range(iterations):
+            # firstly we need a copy of the utilities not to modify the actual utility
+            # before it is supposed to
             new_utilities = self.utilities.copy()
             for state in self.mdp.get_states():
                 new_utilities[str(state)] = self.compute_bellman(state)
+            # you can now update the actual utilites nw
             self.utilities=new_utilities
     # Given an environment and a state, return the best action as guided by the learned utilities and the MDP
     # If the state is terminal, return None
@@ -57,10 +62,10 @@ class ValueIterationAgent(Agent[S, A]):
         #TODO: Complete this function
         # if more than one action has the maximum expected utility, return the one that appears first in the "actions" list
         
-        # return the action that maximizes the expected utility Q(s,a)
         if self.mdp.is_terminal(state):
             return None
         
+        # return the action that maximizes the expected utility Q(s,a)
         actions = env.actions()
         best_action = None
         max_u=-inf

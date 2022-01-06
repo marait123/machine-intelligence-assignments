@@ -1,3 +1,4 @@
+from os import stat
 from typing import Callable, DefaultDict, Dict, Generic, List, Optional, Union
 from agents import Agent
 from environment import Environment, S, A
@@ -6,7 +7,7 @@ from helpers.utils import NotImplemented
 
 import json
 from collections import defaultdict
-
+inf=1e30
 # The base class for all Reinforcement Learning Agents required for this problem set
 class RLAgent(Agent[S, A]):
     rng: RandomGenerator # A random number generator used for exploration
@@ -41,11 +42,18 @@ class RLAgent(Agent[S, A]):
         actions = env.actions()
         if training and self.should_explore():
             #TODO: Return a random action whose index is "self.rng.int(0, len(actions)-1)"
-            NotImplemented()
+            return actions[self.rng.int(0, len(actions)-1)]
         else:
             #TODO: return the action with the maximum q-value as calculated by "compute_q" above
             # if more than one action has the maximum q-value, return the one that appears first in the "actions" list
-            NotImplemented()
+            max_q= -inf
+            max_action = None
+            for action in actions:
+                new_q = self.compute_q(env,observation, action)
+                if new_q > max_q:
+                    max_q = new_q
+                    max_action=action
+            return max_action
 
 #############################
 #######     SARSA      ######
@@ -75,7 +83,10 @@ class SARSALearningAgent(RLAgent[S, A]):
     def update(self, env: Environment[S, A], state: S, action: A, reward: float, next_state: S, next_action: Optional[A]):
         #TODO: Complete this function to update Q-table using the SARSA update rule
         # If next_action is None, then next_state is a terminal state in which case, we consider the Q-value of next_state to be 0
-        NotImplemented()
+        if next_state is None:
+            return
+        q_s_abar = self.Q[str(next_state)][str(next_action)] 
+        self.Q[str(state)][str(action)] = self.Q[str(state)][str(action)]  + self.learning_rate * (reward + self.discount_factor * q_s_abar- self.Q[str(state)][str(action)]) 
 
     # Save the Q-table to a json file
     def save(self, file_path: str):
@@ -113,14 +124,21 @@ class QLearningAgent(RLAgent[S, A]):
     
     # Given a state, compute and return the utility of the state using the function "compute_q"
     def compute_utility(self, env: Environment[S, A], state: S) -> float:
-        #TODO: Complete this function.
-        NotImplemented()
+        #TODO: Complete this function..
+        # utility value = argmax(a) Q(s,a)
+        actions = env.actions()
+        max_q = -inf
+        for action in actions:
+            max_q = max(max_q, self.compute_q(env, state,action))
+        return max_q
 
     # Update the value of Q(state, action) using this transition via the Q-Learning update rule
     def update(self, env: Environment[S, A], state: S, action: A, reward: float, next_state: S, done: bool):
         #TODO: Complete this function to update Q-table using the Q-Learning update rule
         # If done is True, then next_state is a terminal state in which case, we consider the Q-value of next_state to be 0
-        NotImplemented()
+        q_s_a = self.Q[str(state)][str(action)]
+        q_s_abar = self.compute_utility(env, next_state)
+        self.Q[str(state)][str(action)] = q_s_a + self.learning_rate *(reward + self.discount_factor * q_s_abar - q_s_a)
     
     # Save the Q-table to a json file
     def save(self, file_path: str):
@@ -176,13 +194,21 @@ class ApproximateQLearningAgent(RLAgent[S, A]):
     def __compute_q_from_features(self, features: Dict[str, float], action: A) -> float:
         #TODO: Complete this function
         # NOTE: Remember to cast the action to string before quering self.weights
-        NotImplemented()
+
+        q_val=0
+        weightsDic = self.weights[str(action)]
+        for feature in weightsDic:
+            q_val += (weightsDic[feature] * features[feature])        
+        return q_val
     
     # Given the features of a state, compute and return the utility of the state using the function "__compute_q_from_features"
     def __compute_utility_from_features(self, features: Dict[str, float]) -> float:
         #TODO: Complete this function
-        NotImplemented()
-
+        # utility is the max q over all actions
+        utility= -inf
+        for action in self.actions:
+            utility = max(utility, self.__compute_q_from_features(features, action))
+        return utility
     def compute_q(self, env: Environment[S, A], state: S, action: A) -> float:
         features = self.feature_extractor.extract_features(env, state)
         return self.__compute_q_from_features(features, action)
@@ -191,7 +217,19 @@ class ApproximateQLearningAgent(RLAgent[S, A]):
     def update(self, env: Environment[S, A], state: S, action: A, reward: float, next_state: S, done: bool):
         #TODO: Complete this function to update weights using the Q-Learning update rule
         # If done is True, then next_state is a terminal state in which case, we consider the Q-value of next_state to be 0
-        NotImplemented()
+        # extract the features for the current state
+        features = self.feature_extractor.extract_features(env,state)
+        q_s_a = self.compute_q(env, state, action)
+        features_bar = self.feature_extractor.extract_features(env, next_state)
+        
+        q_s_abar = 0 if done else self.__compute_utility_from_features(features_bar)
+        
+        # update the weights for each feature in the weights dictionary for the current action
+        for weight_feature in self.weights[str(action)]:
+            w_i_a = self.weights[str(action)][weight_feature]
+            wi = features[weight_feature]
+            self.weights[str(action)][weight_feature] =  w_i_a + self.learning_rate * (reward + self.discount_factor * q_s_abar - q_s_a)*wi
+        
     
     # Save the weights to a json file
     def save(self, file_path: str):
